@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": "codeql-custom-queries-javascript"
+		},
+		{
+			"path": "codeql"
+		}
+	],
+	"settings": {
+		"omnisharp.autoStart": false
+	}
+}
