@@ -45,10 +45,10 @@ The pull request linked above shows one approach to making such plugins safer: u
 let text = $(document).find(options.textSrcSelector).text();
 ```
 
-In this challenge, we will use CodeQL to analyze the source code of Bootstrap, taken from before these vulnerabilities were patched, and identify the vulnerabilities.
+In this workshop, we will use CodeQL to analyze the source code of Bootstrap, taken from before these vulnerabilities were patched, and identify the vulnerabilities.
 
-## Challenge
-The challenge is split into several steps. You can write one query per step, or work with a single query that you refine at each step.
+## Workshop
+The workshop is split into several steps. You can write one query per step, or work with a single query that you refine at each step.
 
 Each step has a **Hint** that describe useful classes and predicates in the CodeQL standard libraries for JavaScript and keywords in CodeQL. You can explore these in your IDE using the autocomplete suggestions and jump-to-definition command.
 
