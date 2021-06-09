@@ -1,10 +1,11 @@
 {
 	"folders": [
 		{
-			"path": "codeql-custom-queries-javascript"
+			"path": "."
 		},
 		{
-			"path": "codeql"
+			"name": "[esbena_bootstrap-pre-27047_204f9cf source archive]",
+			"uri": "codeql-zip-archive://1-200/c:\\Users\\LukeCartey\\AppData\\Roaming\\Code\\User\\workspaceStorage\\e0870da00d4f05fbb71f7bbf01d96786\\GitHub.vscode-codeql\\esbena_bootstrap-pre-27047_javascript-1\\esbena_bootstrap-pre-27047_204f9cf\\src.zip"
 		}
 	],
 	"settings": {
