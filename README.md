@@ -8,8 +8,8 @@ This workshop covers the basics of writing a CodeQL query to find real vulnerabi
 
 ## Setup instructions
 
-1. Install the Visual Studio Code IDE.
-1. Download and install the [CodeQL extension for Visual Studio Code](https://help.semmle.com/codeql/codeql-for-vscode.html). Full setup instructions are [here](https://help.semmle.com/codeql/codeql-for-vscode/procedures/setting-up.html).
+1. Install the [Visual Studio Code IDE](https://code.visualstudio.com/download).
+1. Install the [CodeQL extension for Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=GitHub.vscode-codeql) by clicking on the link to visit the Visual Studio Code Marketplace in your browser, and click install. Alternatively, open the "Extensions" tab in VS Code and search for CodeQL.
 1. Clone this repository locally by running `git clone --recursive https://github.com/advanced-security/codeql-workshop-2021-learning-journey`.
    - **Important**: The repository needs to be cloned recursively because the CodeQL standard query libraries are contained as a submodule on this repository. Don't worry if you forgot to do so initially - you can fetch the submodules after cloning the repository by running `git submodule update --init --remote`.
 1. Open the workspace: File > Open Workspace > Browse to `codeql-workshop-2021-learning-journey/codeql-workshop-2021-learning-journey.code-workspace`.
