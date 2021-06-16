@@ -1,12 +1,15 @@
+
+### Want to know more about how you can use CodeQL with commercial code bases? Get in touch with our Sales team using [this contact form](https://enterprise.github.com/contact?utm_source=github&utm_medium=event&utm_campaign=Learning-Journey-part-2-repo).
+
 # GitHub Learning Journey: Advanced vulnerability hunting with CodeQL
 
 This workshop covers how existing queries can be customized to better fit threat models for specific applications.
 
-We recommend completing the [beginner session](README.md) before attempting 
+We recommend completing the [beginner session](README.md) before attempting this session,
 
-- Topic: Find a path traversal vulnerability in a StorageService
+- Topic: Find a path traversal vulnerability in a file storage service
 - Analyzed language: C#
-- Difficulty level: 1/3
+- Difficulty level: 2/3
 
 ## Setup instructions
 1. If you have not already done so, follow Steps 1.-3. from the [Setup instructions](README.md#setup-instructions) from the previous workshop to install VS Code and the CodeQL extension.
@@ -83,94 +86,74 @@ In this first exercise, we will write a short query to find parameters of the li
     </details>
 
 ### Understanding the out-of-the-box tainted path query
-The out-of-the-box CodeQL query for finding path traversal vulnerabilities follows a standard pattern fo
+The out-of-the-box CodeQL query for finding path traversal vulnerabilities follows a standard pattern for queries that look for untrusted data flow. It uses the `TaintTracking` module provided by the CodeQL C# library to help answer the question - "does tainted data flow from this untrusted entry point to this unsafe file API without sanitization". To help use explore these concepts, we can open `TaintedPathSimplified.ql` which provides a simplified version of the query:
 
-1. Opemn
-
-1. When a jQuery plugin option is accessed, the code generally looks like `something.options.optionName`. First, identify all accesses to a property named `options`.
+1. The query uses a _taint tracking configuration_ to specify "sources" of untrusted data and "sinks" to which the untrusted data should not flow. The simplified query has the template nearly completed. Fill out the `isSource` predicate to specify that the source of untrusted data is remote flow sources.
     <details>
     <summary>Hint</summary>
 
-    Property accesses are called `PropAccess` in the CodeQL JavaScript libraries. Use `PropAccess.getPropertyName()` to identify the property.
+    The `RemoteFlowSource` class is provided by the standard library to specify all the places that, by default, we believe accept data from remote sources. To use this in the `isSource` predicate we can use the `instanceof` operator to specify that the source is an instanceof `RemoteFlowSource`.
     </details>
     <details>
     <summary>Solution</summary>
     
     ```
-    from PropAccess optionsAccess
-    where optionsAccess.getPropertyName() = "options"
-    select optionsAccess
+    override predicate isSource(DataFlow::Node source) {
+      source instanceof RemoteFlowSource
+    }
     ```
     </details>
 
-1. Take your query from the previous step, and modify it to find chained property accesses of the form `something.options.optionName`.
+1. Fill out the `isSink` predicate.
     <details>
     <summary>Hint</summary>
 
-    There are two property accesses here, with the second being made upon the result of the first. `PropAccess.getBase()` gives the object whose property is being accessed.
+    The query includes a `FileCreateSink` class which defines a set of places in the program where files are created. Use this as the sink, by using `instanceof FileCreateSink`.
     </details>
     <details>
     <summary>Solution</summary>
     
     ```
-    from PropAccess optionsAccess, PropAccess nestedOptionAccess
-    where
-      optionsAccess.getPropertyName() = "options" and
-      nestedOptionAccess.getBase() = optionsAccess
-    select nestedOptionAccess
+    override predicate isSink(DataFlow::Node sink) {
+      sink instanceof FileCreateSink
+    }
     ```
     </details>
 
-### Putting it all together
+### Customizing the out-of-the-box query
 
-1. Combine your queries from the two previous sections. Find chained property accesses of the form `something.options.optionName` that are used as the argument of calls to the jQuery `$` function.
+1. Open the `TaintedPath.ql` query, and use jump-to-definition (F12) to visit `semmle.code.csharp.security.dataflow.TaintedPath::TaintedPath`. How does the default query specify the sources? How can we extend them?
     <details>
     <summary>Hint</summary>
-    Declare all the variables you need in the `from` section, and use the `and` keyword to combine all your logical conditions.
+    The default mechanism uses a feature called `abstract` classes. These classes represent _extension points_, and by writing classes that extend them you add to the set of values represented by that class.
+    </details>
+    <details>
+    <summary>Solution</summary>
+    The query uses an abstract class `Source` to represent the sources for this query. By default, `Source` is extended once to add all `RemoteFlowSource`s to the set of sources for this query. To add more sources, we simply need to extend
+    </details>
+
+1. Implement the `SaveBlobParameterSource` class to add the `SaveBlobStream` and `SaveBlobStreamAsync` parameters as sources for the query.
+    <details>
+    <summary>Hint</summary>
+    Use `exists(Method saveBlobStream | /* add logic here */)` to introduce a local variable to refer to the method.
     </details>
     <details>
     <summary>Solution</summary>
     
     ```
-    from CallExpr dollarCall, Expr dollarArg, PropAccess optionsAccess, PropAccess nestedOptionAccess
-    where
-      dollarCall.getArgument(0) = dollarArg and
-      dollarCall.getCalleeName() = "$" and
-      optionsAccess.getPropertyName() = "options" and
-      nestedOptionAccess.getBase() = optionsAccess and
-      dollarArg = nestedOptionAccess
-    select dollarArg
+    class SaveBlobParameterSource extends Source {
+      SaveBlobParameterSource() {
+        exists(Method saveBlobStream |
+          saveBlobStream.getName() = "SaveBlobStream" or
+          saveBlobStream.getName() = "SaveBlobStreamAsync"
+        |
+          this.asParameter() = saveBlobStream.getAParameter()
+        )
+      }
+    }
     ```
     </details>
 
-1. (Bonus) The solution to step 2 should result in a query with three alerts on the unpatched Bootstrap codebase, two of which are true positives that were fixed in the linked pull request. There are however additional vulnerabilities that are beyond the capabilities of a purely syntactic query such as the one we have written. For example, the access to the jQuery option (`something.options.optionName`) is not always used directly as the argument of the call to `$`: it might be assigned first to a local variable, which is then passed to `$`.
+## Next steps
 
-    The use of intermediate variables and nested expressions are typical source code examples that require use of **data flow analysis** to detect.
-
-    To find one more variant of this vulnerability, try adjusting the query to use the JavaScript data flow library a tiny bit, instead of relying purely on the syntactic structure of the vulnerability. See the hint for more details.
-
-    <details>
-    <summary>Hint</summary>
-
-    - If we have an AST node, such as an `Expr`, then [`flow()`](https://help.semmle.com/qldoc/javascript/semmle/javascript/AST.qll/predicate.AST$AST$ValueNode$flow.0.html) will convert it into a __data flow node__, which we can use to reason about the flow of information to/from this expression.
-    - If we have a data flow node, then [`getALocalSource()`](https://help.semmle.com/qldoc/javascript/semmle/javascript/dataflow/DataFlow.qll/predicate.DataFlow$DataFlow$Node$getALocalSource.0.html) will give us another data flow node in the same function whose value ends up in this node.
-    - If we have a data flow node, then `asExpr()` will turn it back into an AST expression, if possible.
-    </details>
-    <details>
-    <summary>Solution</summary>
-    
-    ```
-    from CallExpr dollarCall, Expr dollarArg, PropAccess optionsAccess, PropAccess nestedOptionAccess
-    where
-      dollarCall.getArgument(0) = dollarArg and
-      dollarCall.getCalleeName() = "$" and
-      optionsAccess.getPropertyName() = "options" and
-      nestedOptionAccess.getBase() = optionsAccess and
-      dollarArg.flow().getALocalSource().asExpr() = nestedOptionAccess
-    select dollarArg, nestedOptionAccess
-    ```
-    </details>
-
-## Acknowledgements
-
-This is a reduced version of a Capture-the-Flag challenge devised by @esbena, available at https://securitylab.github.com/ctf/jquery. Try out the full version!
+The query we've written identifies the known vulnerabilities in this codebase. These vulnerabilities have since been fixed. However, there may be other similar vulnerabilities in the codebase that have yet to be identified.

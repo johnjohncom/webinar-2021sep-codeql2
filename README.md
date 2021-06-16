@@ -1,5 +1,7 @@
 # GitHub Learning Journey: Easy vulnerability hunting with CodeQL
 
+Attending the "Advanced vulnerability hunting with CodeQL session"? Follow [this link](README-advanced.md) for the instructions.
+
 This workshop covers the basics of writing a CodeQL query to find real vulnerabilities in source code.
 
 - Topic: Finding unsafe calls to the jQuery `$` function
