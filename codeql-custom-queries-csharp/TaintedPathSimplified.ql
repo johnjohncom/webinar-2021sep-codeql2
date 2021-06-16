@@ -23,7 +23,7 @@ class TaintedPathConfiguration extends TaintTracking::Configuration {
   TaintedPathConfiguration() { this = "TaintedPath" }
 
   override predicate isSource(DataFlow::Node source) {
-    source instanceof 
+    source instanceof /** TODO fill me in. */
   }
 
   override predicate isSink(DataFlow::Node sink) {
