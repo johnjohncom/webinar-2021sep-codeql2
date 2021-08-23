@@ -1,53 +1,53 @@
 # GitHub Learning Journey: Easy vulnerability hunting with CodeQL
 
-Attending the "Advanced vulnerability hunting with CodeQL session"? Follow [this link](README-advanced.md) for the instructions.
+ "Advanced vulnerability hunting with CodeQL session"을 따라하시려면 [링크](README-advanced.md)의 설명을 참조하십시오.
 
-This workshop covers the basics of writing a CodeQL query to find real vulnerabilities in source code.
+이 워크샵은 CodeQL 쿼리를 작성하는 기본적인 방법을 설명합니다.
 
-- Topic: Finding unsafe calls to the jQuery `$` function
-- Analyzed language: JavaScript
-- Difficulty level: 1/3
+- 토픽: jQuery `$` function으로의 불안전한 콜 찾기
+- 분석 언어: JavaScript
+- 난이도: 1/3
 
 ## Setup instructions
 
-1. Install the [Visual Studio Code IDE](https://code.visualstudio.com/download).
-1. Install the [CodeQL extension for Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=GitHub.vscode-codeql) by clicking on the link to visit the Visual Studio Code Marketplace in your browser, and click install. Alternatively, open the "Extensions" tab in VS Code and search for CodeQL.
-1. Clone this repository locally by running `git clone --recursive https://github.com/advanced-security/codeql-workshop-2021-learning-journey`.
-   - **Important**: The repository needs to be cloned recursively because the CodeQL standard query libraries are contained as a submodule on this repository. Don't worry if you forgot to do so initially - you can fetch the submodules after cloning the repository by running `git submodule update --init --remote`.
-1. Open the workspace: File > Open Workspace > Browse to `codeql-workshop-2021-learning-journey/codeql-workshop-2021-learning-journey.code-workspace`.
-1. In order to write queries, we will first need to import a database representing the vulnerable codebase. To do so:
-    - Click the **CodeQL** icon in the left sidebar.
-    - Under the **Databases** section, click the button labeled "From a URL (as a zip file)".
-    - Enter https://github.com/advanced-security/codeql-workshop-2021-learning-journey/releases/download/v1.0/esbena_bootstrap-pre-27047_javascript.zip as the URL.
+1. [Visual Studio Code IDE](https://code.visualstudio.com/download) 설치
+1. [CodeQL extension for Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=GitHub.vscode-codeql) 설치. 링크를 클릭하고, 브라우저에서 Visual Studio Code 마켓플레이스가 열리면, install 클릭. 다른 방법으로, VS Code에서 "Extensions" 탭을 열고 CodeQL을 검색.
+1.  `git clone --recursive https://github.com/advanced-security/codeql-workshop-2021-learning-journey`을 실행하여, 이 저장소를 클론
+   - **중요**: CodeQL 표준 라이브러리는 본 저장소의 서브모듈에 포함되어 있으므로, 리포지토리는 recursively하게 클론해야 함. 만약 초기에 그렇게 하지 못했다면, 저장소 클론 후에 `git submodule update --init --remote`를 실행하여 서브모듈을 가져오면 됩니다. 
+1.  workspace 오픈: File > Open Workspace >  `codeql-workshop-2021-learning-journey/codeql-workshop-2021-learning-journey.code-workspace`.
+1. 쿼리 작성을 위해, 먼저 보안 취약성 코드 베이스를 가져와야 합니다 :
+    - 왼쪽 사이드바에서 **CodeQL** 아이콘을 클릭.
+    -  **Databases** section에서, "From a URL (as a zip file)" 버튼 클릭.
+    -  https://github.com/advanced-security/codeql-workshop-2021-learning-journey/releases/download/v1.0/esbena_bootstrap-pre-27047_javascript.zip  URL입력.
 
-## Documentation links
-If you get stuck, try searching our documentation and blog posts for help and ideas. Below are a few links to help you get started:
+## 도움 자료 링크들
+문제가 생겼다면 아래 도움 자료 문서, 블로그 링크를 통해 도움되는 아이디어를 찾아볼 수 있습니다 :
 - [Learning CodeQL](https://help.semmle.com/QL/learn-ql)
 - [Learning CodeQL for JavaScript](https://help.semmle.com/QL/learn-ql/javascript/ql-for-javascript.html)
 - [Using the CodeQL extension for VS Code](https://help.semmle.com/codeql/codeql-for-vscode.html)
 
-## Problem statement
+## 쿼리할 보안 문제점 설명
 
-jQuery is an extremely popular, but old, open source JavaScript library designed to simplify things like HTML document traversal and manipulation, event handling, animation, and Ajax. The jQuery library supports modular plugins to extend its capabilities. Bootstrap is another popular JavaScript library, which has used jQuery's plugin mechanism extensively. However, the jQuery plugins inside Bootstrap used to be implemented in an unsafe way that could make the users of Bootstrap vulnerable to cross-site scripting (XSS) attacks. This is when an attacker uses a web application to send malicious code, generally in the form of a browser side script, to a different end user.
+jQuery는 아주 인기있는, 그러나 오래된 오픈소스 JavaScript 라이브러리이며, HTML document traversal이나 조작, 이벤트 핸들링, 애니메이션, Ajax 같은 작업들을 간단하게 처리할 수 있게 해줍니다. jQuery 라이브러리는 기능을 확장하기 위해 모듈화된 플러그인을 지원합니다. Bootstrap은 또 다른 인기있는 JavaScript 라이브러리이며, jQuery의 플러그인 방식을 광범위하게 사용합니다. 그러나, Bootstrap내에 jQuery 플러그인들은 cross-site scripting(XSS) 공격에 취약하게 할 수 있는 안전하지 못한 방식으로 사용되곤 합니다. 이를 이용해 공격자는 보통은 브라우져 사이드 스크립트와 같은 방식으로 악성 코드를 보내는 웹 어플리케이션을 사용하여 다른 사용자에게 악성코드를 보냅니다.  
 
-Four such vulnerabilities in Bootstrap jQuery plugins were fixed in [this pull request](https://github.com/twbs/bootstrap/pull/27047), and each was assigned a CVE.
+Bootstrap jQuery plugins의 이러한 보안 취약점은 [이 풀리퀘스트에서](https://github.com/twbs/bootstrap/pull/27047) 보완되었고, 각각 CVE가 할당 되었습니다.
 
-The core mistake in these plugins was the use of the omnipotent jQuery `$` function to process the options that were passed to the plugin. For example, consider the following snippet from a simple jQuery plugin:
+이러한 플러그인들의 핵심적인 문제점은 플러그인으로 전달되는 option들을 처리하기 위해 전능한 기능을 가진 jQuery `$` function의 사용입니다. 예를 들어, 간단한 jQuery plugin인 아래 코드 조각을 보면:
 
 ```javascript
 let text = $(options.textSrcSelector).text();
 ```
 
-This plugin decides which HTML element to read text from by evaluating `options.textSrcSelector` as a CSS-selector, or that is the intention at least. The problem in this example is that `$(options.textSrcSelector)` will execute JavaScript code instead if the value of `options.textSrcSelector` is a string like `"<img src=x onerror=alert(1)>".` 
+이 플러그인은 CSS 선택자로 `options.textSrcSelector`를 통해 어느 HTML element가 텍스트를 읽을지를 결정하거나, 또는 최소한 그러한 의도를 가진 코드입니다. 이 예에서 문제점은 `options.textSrcSelector`가 `"<img src=x onerror=alert(1)>"`와 같은 문자열이라면 `$(options.textSrcSelector)`가 JavaScript코드를 실행할 것이라는 점입니다.  
 
-In security terminology, jQuery plugin options are a **source** of user input, and the argument of `$` is an XSS **sink**.
+보안 용어에서, jQuery plugin options는 사용자 input의 **source** 이고, `$`의 인자는 XSS **sink**입니다.
 
-The pull request linked above shows one approach to making such plugins safer: use a more specialized, safer function like `$(document).find` instead of `$`.
+위에 링크된 풀리퀘스트는 이러한 플러그인들을 안전하게 만들기 위한 하나의 방법입니다 : `$`대신 더 특정화 되고, 안전한 함수인 `$(document).find` 를 사용하는 것입니다. 
 ```javascript
 let text = $(document).find(options.textSrcSelector).text();
 ```
 
-In this workshop, we will use CodeQL to analyze the source code of Bootstrap, taken from before these vulnerabilities were patched, and identify the vulnerabilities.
+이 워크샵에서, 우리는 CodeQL을 이용해 보안 문제점이 해결되기 이전의 Bootstrap 소스코드를 분석하고, 보안 문제점을 찾아낼 것입니다.
 
 ## Workshop
 The workshop is split into several steps. You can write one query per step, or work with a single query that you refine at each step.
