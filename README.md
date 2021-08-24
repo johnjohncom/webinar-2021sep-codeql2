@@ -50,11 +50,11 @@ let text = $(document).find(options.textSrcSelector).text();
 이 워크샵에서, 우리는 CodeQL을 이용해 보안 문제점이 해결되기 이전의 Bootstrap 소스코드를 분석하고, 보안 문제점을 찾아낼 것입니다.
 
 ## Workshop
-The workshop is split into several steps. You can write one query per step, or work with a single query that you refine at each step.
+이 워크샵은 여러개의 단계로 이루어집니다. 여러분은 한 단계마다 쿼리를 작성하거나, 각 단계에서 수정한 하나의 쿼리를 가지고 작업합니다.
 
-Each step has a **Hint** that describe useful classes and predicates in the CodeQL standard libraries for JavaScript and keywords in CodeQL. You can explore these in your IDE using the autocomplete suggestions and jump-to-definition command.
+각 단계는 **Hint** 가 제공되고, 여기에서 여러분은 JavaScript를 위한 CodeQL의 표준 라이브러리에서 유용한 클래스들과 predicate(CodeQL에서의 함수)들, CodeQL내 키워드들에 대한 설명들을 보실 수 있습니다. 이러한 설명들은 IDE에서 자동 완성되는 suggestion과 jump-to-definition 명령으로도 찾아 볼 수 있습니다. 
 
-Each step has a **Solution** that indicates one possible answer. Note that all queries will need to begin with `import javascript`, but for simplicity this may be omitted below.
+각 단계에서 **Solution** 부분은 가능한 해답을 나타냅니다. 모든 쿼리는 `import javascript`로 시작되어야 하지만, 이것은 아래에서 일일히 표시하지 않았습니다.  
 
 ### Finding calls to the jQuery `$` function
 
@@ -107,7 +107,7 @@ Each step has a **Solution** that indicates one possible answer. Note that all q
     </details>
 
 ### Finding accesses to jQuery plugin options
-Consider creating a new query for these next few steps, or commenting out your earlier solutions and using the same file. We will use the earlier solutions again in the next section.
+아래 단계를 위해 새로운 쿼리를 작성하거나, 동일한 파일내에서 이전 단계에서 작성된 쿼리들을 주석 처리 하세요. 다음 섹션에서 이전 단계의 쿼리를 다시 사용할 것입니다.
 
 1. When a jQuery plugin option is accessed, the code generally looks like `something.options.optionName`. First, identify all accesses to a property named `options`.
     <details>
@@ -165,18 +165,18 @@ Consider creating a new query for these next few steps, or commenting out your e
     ```
     </details>
 
-1. (Bonus) The solution to step 2 should result in a query with three alerts on the unpatched Bootstrap codebase, two of which are true positives that were fixed in the linked pull request. There are however additional vulnerabilities that are beyond the capabilities of a purely syntactic query such as the one we have written. For example, the access to the jQuery option (`something.options.optionName`) is not always used directly as the argument of the call to `$`: it might be assigned first to a local variable, which is then passed to `$`.
+1. (Bonus) 단계 2에서의 해답은 보안패치 되지 않은 Bootstrap 코드베이스에서 3개의 alerts를 찾습니다. 이중 2개는 정탐으로서, 위에 링크된 풀리퀘스트에서 해결된 것입니다. 그러나 이러한 순수 syntax한 쿼리의 능력을 넘어서는 추가적인 보안 취약성들이 있습니다. 예를 들어, jQuery option (`something.options.optionName`)으로의 접근은 항상 직접적으로 `$`로의 call의 인자로서만 사용되지 않고, 로컬 변수로 먼저 할당되고, `$`로 전달 될 수도 있습니다.  
 
-    The use of intermediate variables and nested expressions are typical source code examples that require use of **data flow analysis** to detect.
+    이러한 중간 단계 변수의 사용과 nested expressions들은 검출을 위해서 **data flow analysis**를 사용해야 하는 일반적인 소스코드의 예들 입니다. 
 
-    To find one more variant of this vulnerability, try adjusting the query to use the JavaScript data flow library a tiny bit, instead of relying purely on the syntactic structure of the vulnerability. See the hint for more details.
+    이 보안 취약점의 하나 또는 그 이상의 변형들을 찾기 위해, 순수 syntax한 구조에 의존하기 보다는, 약간의 JavaScript 데이터 흐름 분석 라이브러리를 시도해 볼 수 있습니다. 아래 Hint에 더 자세한 정보를 참조하세요.
 
     <details>
     <summary>Hint</summary>
 
-    - If we have an AST node, such as an `Expr`, then [`flow()`](https://help.semmle.com/qldoc/javascript/semmle/javascript/AST.qll/predicate.AST$AST$ValueNode$flow.0.html) will convert it into a __data flow node__, which we can use to reason about the flow of information to/from this expression.
-    - If we have a data flow node, then [`getALocalSource()`](https://help.semmle.com/qldoc/javascript/semmle/javascript/dataflow/DataFlow.qll/predicate.DataFlow$DataFlow$Node$getALocalSource.0.html) will give us another data flow node in the same function whose value ends up in this node.
-    - If we have a data flow node, then `asExpr()` will turn it back into an AST expression, if possible.
+    - `Expr`과 같은 AST노드가 있다면, [`flow()`](https://help.semmle.com/qldoc/javascript/semmle/javascript/AST.qll/predicate.AST$AST$ValueNode$flow.0.html)가 이것을 __data flow node__ 로 바꾸어, 이 expression으로 오고 가는 정보의 흐름에 대한 근거로 사용할 수 있습니다.
+    -  data flow node가 있다면, [`getALocalSource()`](https://help.semmle.com/qldoc/javascript/semmle/javascript/dataflow/DataFlow.qll/predicate.DataFlow$DataFlow$Node$getALocalSource.0.html)가 같은 function내에서, 그 값이 이 data flow node에 이르게 되는 다른 data flow node를 찾아 줍니다.  
+    - data flow node가 있다면, `asExpr()`은 가능하다면 이것을 AST expression으로 되돌려 줍니다. 
     </details>
     <details>
     <summary>Solution</summary>
